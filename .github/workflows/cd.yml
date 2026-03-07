@@ -1,0 +1,229 @@
+name: CD Production
+
+on:
+#  push:
+#    branches: [ main ]
+  workflow_dispatch:    # ← manual trigger only, won't run automatically
+
+env:
+  NAMESPACE: production
+  AWS_REGION: us-east-1                        # ← change to your region
+  JAVA_VERSION: '25'
+  ECR_REPOSITORY: health-app              # ← your actual ECR repo name
+  EKS_CLUSTER_NAME: eks-health-app-cluster # ← your actual cluster name
+  DEPLOYMENT_NAME: health-app
+
+jobs:
+  # ──────────────────────────────────────────
+  # 1. Trigger CI Pipeline first
+  # ──────────────────────────────────────────
+  run-ci:
+    name: Run CI Pipeline
+    uses: ./.github/workflows/ci.yml     # reuses your existing CI workflow
+    secrets: inherit
+
+  # ──────────────────────────────────────────
+  # 2. Deploy to EKS (Blue-Green)
+  # ──────────────────────────────────────────
+  deploy:
+    name: Deploy to EKS Production
+    runs-on: ubuntu-latest
+    needs: run-ci
+    outputs:
+      previous-image: ${{ steps.get-current.outputs.image }}
+      deploy-status: ${{ steps.deploy.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Get current (blue) image for rollback
+        id: get-current
+        run: |
+          CURRENT=$(kubectl get deployment ${{ env.DEPLOYMENT_NAME }} \
+            -n ${{ env.NAMESPACE }} \
+            -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "none")
+          echo "image=$CURRENT" >> "$GITHUB_OUTPUT"
+
+      # ── Blue-Green: deploy green alongside blue ──
+      - name: Deploy green version
+        id: deploy
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Patch the deployment with the new image (green)
+          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} \
+            ${{ env.DEPLOYMENT_NAME }}=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+            -n ${{ env.NAMESPACE }}
+
+          # Rolling update: wait for rollout to complete (max 5 min)
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} \
+            -n ${{ env.NAMESPACE }} \
+            --timeout=300s && echo "status=success" >> "$GITHUB_OUTPUT" \
+            || echo "status=failed" >> "$GITHUB_OUTPUT"
+
+  # ──────────────────────────────────────────
+  # 3. Smoke Tests
+  # ──────────────────────────────────────────
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: needs.deploy.outputs.deploy-status == 'success'
+    outputs:
+      smoke-status: ${{ steps.smoke.outputs.status }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Run smoke tests
+        id: smoke
+        run: |
+          # Get the service endpoint
+          APP_URL=$(kubectl get svc ${{ env.DEPLOYMENT_NAME }}-service \
+            -n ${{ env.NAMESPACE }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+          echo "Testing $APP_URL ..."
+
+          # Retry up to 5 times with 10s delay
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$APP_URL/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Smoke test passed (attempt $i)"
+              echo "status=success" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "⏳ Attempt $i failed (HTTP $STATUS), retrying..."
+            sleep 10
+          done
+
+          echo "status=failed" >> "$GITHUB_OUTPUT"
+          exit 1
+
+  # ──────────────────────────────────────────
+  # 4. Health Check Monitoring
+  # ──────────────────────────────────────────
+  health-check:
+    name: Health Check Monitoring
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    if: needs.smoke-tests.outputs.smoke-status == 'success'
+    outputs:
+      health-status: ${{ steps.health.outputs.status }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Monitor pod health for 2 minutes
+        id: health
+        run: |
+          echo "Monitoring pods for 120s..."
+          END=$((SECONDS+120))
+
+          while [ $SECONDS -lt $END ]; do
+            READY=$(kubectl get deployment ${{ env.DEPLOYMENT_NAME }} \
+              -n ${{ env.NAMESPACE }} \
+              -o jsonpath='{.status.readyReplicas}')
+            DESIRED=$(kubectl get deployment ${{ env.DEPLOYMENT_NAME }} \
+              -n ${{ env.NAMESPACE }} \
+              -o jsonpath='{.spec.replicas}')
+
+            echo "Ready: $READY / Desired: $DESIRED"
+
+            if [ "$READY" != "$DESIRED" ]; then
+              echo "❌ Pods not healthy — ready=$READY desired=$DESIRED"
+              echo "status=failed" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+            sleep 15
+          done
+
+          echo "✅ All pods healthy for 2 minutes"
+          echo "status=success" >> "$GITHUB_OUTPUT"
+
+  # ──────────────────────────────────────────
+  # 5. Automated Rollback on failure
+  # ──────────────────────────────────────────
+  rollback:
+    name: Automated Rollback
+    runs-on: ubuntu-latest
+    needs: [deploy, smoke-tests, health-check]
+    # Trigger if deploy failed, smoke tests failed, or health check failed
+    if: |
+      always() && (
+        needs.deploy.outputs.deploy-status == 'failed' ||
+        needs.smoke-tests.outputs.smoke-status == 'failed' ||
+        needs.health-check.outputs.health-status == 'failed'
+      )
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Rollback to previous version (blue)
+        run: |
+          PREVIOUS_IMAGE="${{ needs.deploy.outputs.previous-image }}"
+
+          if [ "$PREVIOUS_IMAGE" = "none" ] || [ -z "$PREVIOUS_IMAGE" ]; then
+            echo "No previous image found — using kubectl rollout undo"
+            kubectl rollout undo deployment/${{ env.DEPLOYMENT_NAME }} \
+              -n ${{ env.NAMESPACE }}
+          else
+            echo "Rolling back to: $PREVIOUS_IMAGE"
+            kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} \
+              ${{ env.DEPLOYMENT_NAME }}=$PREVIOUS_IMAGE \
+              -n ${{ env.NAMESPACE }}
+          fi
+
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} \
+            -n ${{ env.NAMESPACE }} --timeout=120s
+
+          echo "✅ Rollback complete"

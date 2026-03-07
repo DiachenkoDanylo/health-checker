@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My URLs</title>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+
+<h2>My Monitored URLs</h2>
+
+<!-- ADD FORM -->
+<form th:action="@{/api/add}" method="post">
+    <input type="text" name="url" placeholder="https://example.com" required />
+    <button type="submit">Add</button>
+</form>
+
+<hr/>
+
+<!-- URL LIST -->
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>URL</th>
+        <th>Action</th>
+        <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    <tr th:each="url : ${urls}">
+        <td th:text="${url.id}"></td>
+        <td th:text="${url.url}"></td>
+        <td>
+            <form th:action="@{/api/delete/{id}(id=${url.id})}"
+                  method="post">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+<!--        <td th:text="${url.isUp()}"></td>-->
+        <td th:if="${url.isUp() == true}" th:text="'SERVER UP'"></td>
+        <td th:if="${url.isUp() == false}" th:text="'SERVER DOWN'"></td>
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(urls)}">
+        <td colspan="3">No URLs added yet</td>
+    </tr>
+
+    </tbody>
+</table>
+
+<br/>
+
+<form th:action="@{/logout}" method="post">
+    <button type="submit">Logout</button>
+</form>
+
+</body>
+</html>
