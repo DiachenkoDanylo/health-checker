@@ -142,7 +142,7 @@ jobs:
           exit-code: 1                          # fail on HIGH/CRITICAL
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          trivyignores: .trivyignore
+#          trivyignores: .trivyignore
 
 
   # ──────────────────────────────────────────
