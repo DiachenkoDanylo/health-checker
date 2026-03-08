@@ -15,6 +15,7 @@
     <description>health-checker</description>
     <properties>
         <jackson.version>3.1.0</jackson.version>  <!-- ← fixes both CVEs -->
+        <jackson-bom.version>3.1.0</jackson-bom.version>
         <java.version>25</java.version>
     </properties>
     <dependencies>
