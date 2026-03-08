@@ -1,0 +1,16 @@
+server:
+  port: 7070
+spring:
+  devtools:
+    livereload:
+      enabled: true
+  jpa:
+    show-sql: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'health'
+  endpoint:
+    health:
+      show-details: never
