@@ -10,7 +10,7 @@ env:
   AWS_REGION: us-east-1                        # ← change to your region
   JAVA_VERSION: '25'
   ECR_REPOSITORY: health-app              # ← your actual ECR repo name
-  EKS_CLUSTER_NAME: eks-health-app-cluster # ← your actual cluster name
+  EKS_CLUSTER_NAME: eks-health-app # ← your actual cluster name
   DEPLOYMENT_NAME: health-app
 
 jobs:
@@ -70,6 +70,10 @@ jobs:
           # Patch the deployment with the new image (green)
           kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} \
             ${{ env.DEPLOYMENT_NAME }}=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+            -n ${{ env.NAMESPACE }}
+
+          # Force restart to ensure new image is pulled
+          kubectl rollout restart deployment/${{ env.DEPLOYMENT_NAME }} \
             -n ${{ env.NAMESPACE }}
 
           # Rolling update: wait for rollout to complete (max 5 min)

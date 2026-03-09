@@ -8,7 +8,7 @@ env:
   AWS_REGION: us-east-1                        # ← change to your region
   JAVA_VERSION: '25'
   ECR_REPOSITORY: health-app              # ← your actual ECR repo name
-  EKS_CLUSTER_NAME: eks-health-app-cluster # ← your actual cluster name
+  EKS_CLUSTER_NAME: eks-health-app # ← your actual cluster name
   DEPLOYMENT_NAME: health-app
 
 jobs:
