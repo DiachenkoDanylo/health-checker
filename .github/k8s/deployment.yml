@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-app
+  namespace: production
+spec:
+  replicas: 1 #2 - 1 for freetier
+  selector:
+    matchLabels:
+      app: health-app
+  template:
+    metadata:
+      labels:
+        app: health-app
+    spec:
+      containers:
+        - name: health-app
+          image: 348263686377.dkr.ecr.us-east-1.amazonaws.com/health-app:latest
+          ports:
+            - containerPort: 8080
+          # ── Health checks so EKS knows if your app is alive ──
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          # ── Resource limits ──
+          resources:
+            requests:
+              memory: "256Mi"            # ← was 512Mi
+              cpu: "100m"                # ← was 250m
+            limits:
+              memory: "512Mi"            # ← was 1Gi
+              cpu: "250m"                # ← was 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: health-app-service
+  namespace: production
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+spec:
+  type: LoadBalancer
+  selector:
+    app: health-app
+  ports:
+    - port: 80
+      targetPort: 8080

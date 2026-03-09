@@ -33,5 +33,6 @@ public class Starter {
         authorityRepository.save(new Authority("USER"));
         authorityRepository.save(new Authority("ADMIN"));
         authenticationService.registerUser(new RegisterUserPayload("user1", "pass1", Set.of("USER")));
+        authenticationService.registerUser(new RegisterUserPayload("admin1", "admin1", Set.of("ADMIN")));
     }
 }
