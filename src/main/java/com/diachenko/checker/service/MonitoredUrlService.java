@@ -25,6 +25,10 @@ public class MonitoredUrlService {
     private final AppUserService appUserService;
     private final UserRepository userRepository;
 
+    public MonitoredUrl getById(Long id) {
+        return urlRepository.getReferenceById(id);
+    }
+
     @Transactional
     public void subscribeUserToUrl(String username, String rawUrl) {
 
