@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>History</title>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+
+<h2 th:text="${monitoredUrl.url}"></h2>
+
+<!-- ADD FORM -->
+<form th:action="@{/api/add}" method="post">
+    <input type="text" name="url" placeholder="https://example.com" required />
+    <button type="submit">Add</button>
+</form>
+
+<hr/>
+
+<!--private boolean isUp;-->
+
+<!--private Integer httpStatus;-->
+
+<!--private Long responseTimeMs;-->
+
+<!--private LocalDateTime checkedAt;-->
+<!-- URL LIST -->
+<table border="1">
+    <thead>
+    <tr>
+        <th>Is Up</th>
+        <th>Status</th>
+        <th>Response Time MS</th>
+        <th>Checked At</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    <tr th:each="check : ${historyCheksList}">
+        <td th:if="${check.up == true}" th:text="'UP'" style="background-color: #4CAF50"></td>
+        <td th:if="${check.up == false}" th:text="'DOWN'" style="background-color: crimson"></td>
+        <td th:text="${check.httpStatus}"></td>
+        <td th:text="${check.responseTimeMs}"></td>
+        <td th:text="${check.checkedAt}"></td>
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(historyCheksList)}">
+        <td colspan="3">No checks yet</td>
+    </tr>
+
+    </tbody>
+</table>
+
+<br/>
+
+<form th:action="@{/logout}" method="post">
+    <button type="submit">Logout</button>
+</form>
+
+</body>
+</html>

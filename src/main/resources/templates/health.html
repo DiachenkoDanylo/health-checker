@@ -24,13 +24,16 @@
         <th>URL</th>
         <th>Action</th>
         <th>Status</th>
+        <th>Last update</th>
     </tr>
     </thead>
     <tbody>
 
     <tr th:each="url : ${urls}">
         <td th:text="${url.id}"></td>
-        <td th:text="${url.url}"></td>
+        <td>
+            <a th:href="@{/api/history/{id}(id=${url.id})}" th:text="${url.url}"></a>
+        </td>
         <td>
             <form th:action="@{/api/delete/{id}(id=${url.id})}"
                   method="post">
@@ -40,6 +43,8 @@
 <!--        <td th:text="${url.isUp()}"></td>-->
         <td th:if="${url.isUp() == true}" th:text="'SERVER UP'"></td>
         <td th:if="${url.isUp() == false}" th:text="'SERVER DOWN'"></td>
+
+        <td th:text="${url.lastUpdate}"></td>
     </tr>
 
     <tr th:if="${#lists.isEmpty(urls)}">
