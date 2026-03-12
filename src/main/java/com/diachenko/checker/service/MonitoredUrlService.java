@@ -25,6 +25,10 @@ public class MonitoredUrlService {
     private final AppUserService appUserService;
     private final UserRepository userRepository;
 
+    public MonitoredUrl getById(Long id) {
+        return urlRepository.getReferenceById(id);
+    }
+
     @Transactional
     public void subscribeUserToUrl(String username, String rawUrl) {
 
@@ -69,11 +73,13 @@ public class MonitoredUrlService {
     @Transactional
     public void updateStatus(Long id, boolean isUp) {
         MonitoredUrl url = urlRepository.findById(id).orElseThrow(() -> new RuntimeException("MONITORED URL NOT FOUND"));
-        if (isUp != url.isUp()) {
-            url.setUp(isUp);
-            url.setLastUpdate(LocalDateTime.now());
-            urlRepository.save(url);
+        url.setFailureCount(isUp ? 0 : url.getFailureCount() + 1);
+        if (url.getFailureCount() >= 3) {
+            url.setUp(false);
         }
+        url.setLastUpdate(LocalDateTime.now());
+        url.setUp(isUp);
+        urlRepository.save(url);
     }
 
     public Set<MonitoredUrl> getAllUrls() {

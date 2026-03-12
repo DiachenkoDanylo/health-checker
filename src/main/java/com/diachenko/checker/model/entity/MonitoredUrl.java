@@ -32,11 +32,13 @@ public class MonitoredUrl {
     @Column(nullable = false)
     private String url;
 
-    @ManyToMany(mappedBy = "monitoredUrls")
+    @ManyToMany(mappedBy = "monitoredUrls", fetch = FetchType.LAZY)
     private Set<AppUser> subscribers = new HashSet<>();
 
-    boolean isUp = false;
+    private boolean isUp = false;
 
-    LocalDateTime lastUpdate = LocalDateTime.now();
+    private Long failureCount = 0L;
+
+    private LocalDateTime lastUpdate = LocalDateTime.now();
 
 }
