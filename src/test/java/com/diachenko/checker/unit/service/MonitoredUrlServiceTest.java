@@ -29,20 +29,18 @@ import static org.mockito.Mockito.*;
 
 class MonitoredUrlServiceTest {
 
+    private final String rawUrl = TestDataFactory.getRawUrl();
+    private final String normUrl = TestDataFactory.getNormUrl();
+    private final AppUser appUser = TestDataFactory.user();
+    private final MonitoredUrl monitoredUrl = TestDataFactory.monitoredUrl();
     @InjectMocks
     private MonitoredUrlService monitoredUrlService;
-
     @Mock
     private MonitoredUrlRepository urlRepository;
     @Mock
     private AppUserService appUserService;
     @Mock
     private UserRepository userRepository;
-
-    private final String rawUrl = TestDataFactory.getRawUrl();
-    private final String normUrl = TestDataFactory.getNormUrl();
-    private final AppUser appUser = TestDataFactory.user();
-    private final MonitoredUrl monitoredUrl = TestDataFactory.monitoredUrl();
 
     @BeforeEach
     void setUp() {
@@ -150,7 +148,22 @@ class MonitoredUrlServiceTest {
 
         monitoredUrlService.updateStatus(monitoredUrl.getId(), false);
 
-        assertEquals(start, monitoredUrl.getLastUpdate());
+        assertTrue(start.isBefore(monitoredUrl.getLastUpdate()));
+        assertEquals(1L, monitoredUrl.getFailureCount());
+    }
+
+    @Test
+    void updateStatus_success_setUpDownAfter3Checks() {
+        LocalDateTime start = TestDataFactory.monitoredUrl().getLastUpdate();
+        when(urlRepository.findById(monitoredUrl.getId())).thenReturn(Optional.of(monitoredUrl));
+
+        monitoredUrlService.updateStatus(monitoredUrl.getId(), false);
+        monitoredUrlService.updateStatus(monitoredUrl.getId(), false);
+        monitoredUrlService.updateStatus(monitoredUrl.getId(), false);
+
+        assertTrue(start.isBefore(monitoredUrl.getLastUpdate()));
+        assertEquals(3L, monitoredUrl.getFailureCount());
+        assertFalse(monitoredUrl.isUp());
     }
 
     @Test

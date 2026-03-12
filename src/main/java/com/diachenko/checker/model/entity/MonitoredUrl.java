@@ -37,6 +37,8 @@ public class MonitoredUrl {
 
     private boolean isUp = false;
 
+    private Long failureCount = 0L;
+
     private LocalDateTime lastUpdate = LocalDateTime.now();
 
 }
