@@ -4,4 +4,11 @@ spring:
       enabled: true
   application:
     name: "health-checker"
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
