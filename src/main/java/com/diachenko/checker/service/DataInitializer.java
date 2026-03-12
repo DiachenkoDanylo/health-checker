@@ -6,10 +6,11 @@ package com.diachenko.checker.service;
     @author DiachenkoDanylo
 */
 
+import com.diachenko.checker.model.entity.AppUser;
 import com.diachenko.checker.model.entity.Authority;
+import com.diachenko.checker.model.entity.MonitoredUrl;
 import com.diachenko.checker.model.payload.RegisterUserPayload;
 import com.diachenko.checker.repository.AuthorityRepository;
-import com.diachenko.checker.repository.MonitoredUrlRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -21,18 +22,39 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Profile("h2")
-public class Starter {
+public class DataInitializer {
 
     private final AuthenticationService authenticationService;
     private final AuthorityRepository authorityRepository;
-    private final MonitoredUrlRepository monitoredUrlRepository;
     private final MonitoredUrlService monitoredUrlService;
+    private final AppUserService appUserService;
 
     @EventListener
     public void on(ApplicationReadyEvent event) {
+        initializeAuthorities();
+        initializeUsers();
+        initializeUrls();
+        initializeAssignUrlsToUser();
+    }
+
+    public void initializeAuthorities() {
         authorityRepository.save(new Authority("USER"));
         authorityRepository.save(new Authority("ADMIN"));
+    }
+
+    public void initializeUsers() {
         authenticationService.registerUser(new RegisterUserPayload("user1", "pass1", Set.of("USER")));
         authenticationService.registerUser(new RegisterUserPayload("admin1", "admin1", Set.of("ADMIN")));
+    }
+
+    public void initializeUrls() {
+        //done by flyway migration
+    }
+
+    public void initializeAssignUrlsToUser() {
+        AppUser user = appUserService.getByUsernameWithUrls("user1");
+        Set<MonitoredUrl> urls = monitoredUrlService.getAllUrls();
+        user.getMonitoredUrls().addAll(urls);
+        appUserService.saveAppUser(user);
     }
 }

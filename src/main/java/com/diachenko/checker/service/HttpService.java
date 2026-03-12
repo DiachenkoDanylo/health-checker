@@ -31,25 +31,14 @@ public class HttpService {
 
     @Scheduled(fixedDelay = 60000)
     public void updateStatuses() {
-        System.out.println("Updating statuses");
-
         Set<MonitoredUrl> urls = monitoredUrlService.getAllUrls();
-
-        System.out.println("URLs count: " + urls.size());
-        System.out.println("Executor class: " + monitoringExecutor.getClass());
-
         urls.forEach(url ->
                 monitoringExecutor.submit(() ->
                         checkUrl(url.getId(), url.getUrl()))
         );
-        System.out.println("DONE UPDATING STATUSES");
     }
 
     private void checkUrl(Long id, String urlString) {
-
-        System.out.println("Checking URL: " + urlString);
-        System.out.println("Thread: " + Thread.currentThread());
-
         boolean isUp = false;
         int statusCode = 0;
         long responseTimeMs = 0;
@@ -61,30 +50,23 @@ public class HttpService {
                     .build();
 
             long start = System.nanoTime();
-
             HttpResponse<Void> response =
                     httpClientDefault.send(request, HttpResponse.BodyHandlers.discarding());
 
             long end = System.nanoTime();
             responseTimeMs = (end - start) / 1_000_000;
-
             statusCode = response.statusCode();
-            System.out.println("Status code: " + response.statusCode());
-
 
             isUp = statusCode >= 200 &&
                     statusCode < 400;
 
-//            monitoredUrlService.updateStatus(id, isUp);
 
         } catch (Exception e) {
-            e.printStackTrace(); // VERY IMPORTANT
+            e.printStackTrace();
             isUp = false;
-//            monitoredUrlService.updateStatus(id, false);
         } finally {
             urlCheckResultService.saveUrlCheckResult(id,isUp,statusCode,responseTimeMs);
             monitoredUrlService.updateStatus(id, isUp);
         }
     }
-
 }
