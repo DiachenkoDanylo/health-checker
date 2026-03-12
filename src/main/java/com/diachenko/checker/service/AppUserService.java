@@ -40,4 +40,8 @@ public class AppUserService {
             userRepository.deleteById(appUser.getId());
         }
     }
+
+    public AppUser saveAppUser(AppUser appUser) {
+        return userRepository.save(appUser);
+    }
 }
