@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles({"standalone", "h2"})
+@ActiveProfiles({"standalone"})
 class HealthCheckControllerTest {
 
     AppUser appUser;
