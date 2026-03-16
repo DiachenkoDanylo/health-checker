@@ -21,7 +21,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-@Profile("h2")
+@Profile("!prod")
 public class DataInitializer {
 
     private final AuthenticationService authenticationService;
