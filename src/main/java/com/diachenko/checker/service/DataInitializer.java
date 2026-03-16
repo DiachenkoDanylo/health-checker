@@ -10,7 +10,6 @@ import com.diachenko.checker.model.entity.AppUser;
 import com.diachenko.checker.model.entity.Authority;
 import com.diachenko.checker.model.entity.MonitoredUrl;
 import com.diachenko.checker.model.payload.RegisterUserPayload;
-import com.diachenko.checker.repository.AuthorityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class DataInitializer {
 
     private final AuthenticationService authenticationService;
-    private final AuthorityRepository authorityRepository;
+    private final AuthorityService authorityService;
     private final MonitoredUrlService monitoredUrlService;
     private final AppUserService appUserService;
 
@@ -38,8 +37,8 @@ public class DataInitializer {
     }
 
     public void initializeAuthorities() {
-        authorityRepository.save(new Authority("USER"));
-        authorityRepository.save(new Authority("ADMIN"));
+        authorityService.save(new Authority("USER"));
+        authorityService.save(new Authority("ADMIN"));
     }
 
     public void initializeUsers() {
