@@ -7,7 +7,6 @@ package com.diachenko.checker.controller;
 */
 
 import com.diachenko.checker.model.entity.UrlCheckResult;
-import com.diachenko.checker.repository.UrlCheckResultRepository;
 import com.diachenko.checker.service.MonitoredUrlService;
 import com.diachenko.checker.service.UrlCheckResultService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ public class UrlCheckResultController {
     private final MonitoredUrlService monitoredUrlService;
 
     @GetMapping("/{id}")
-    public String getHistoryById(@PathVariable (name = "id") Long id, Model model) {
+    public String getHistoryById(@PathVariable(name = "id") Long id, Model model) {
         List<UrlCheckResult> urlCheckResultList = urlCheckResultService.getAllUrlCheckResultsByUrlId(id);
         model.addAttribute("monitoredUrl", monitoredUrlService.getById(id));
         model.addAttribute("historyCheksList", urlCheckResultList);

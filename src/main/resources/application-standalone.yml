@@ -1,6 +1,10 @@
 server:
   port: 7070
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/health_check
+    username: postgres
+    password: postgres
   devtools:
     livereload:
       enabled: true

@@ -6,7 +6,7 @@ package com.diachenko.checker.integration.controller;
     @author DiachenkoDanylo
 */
 
-import com.diachenko.checker.AbstractIntegrationTest;
+import com.diachenko.checker.integration.AbstractIntegrationTest;
 import com.diachenko.checker.integration.IntegrationTestDataFactory;
 import com.diachenko.checker.model.entity.AppUser;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,6 @@ class HealthCheckControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-
 
     @Autowired
     private IntegrationTestDataFactory integrationTestDataFactory;

@@ -12,7 +12,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 
 @Entity
-@Table(name = "authority")
+@Table(name = "authority",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "authority")
+        }
+)
 @AllArgsConstructor
 public class Authority implements GrantedAuthority {
 
@@ -47,13 +51,11 @@ public class Authority implements GrantedAuthority {
         if (o == null || getClass() != o.getClass()) return false;
 
         Authority authority1 = (Authority) o;
-        return id.equals(authority1.id) && authority.equals(authority1.authority);
+        return authority.equals(authority1.authority);
     }
 
     @Override
     public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + authority.hashCode();
-        return result;
+        return authority.hashCode();
     }
 }
