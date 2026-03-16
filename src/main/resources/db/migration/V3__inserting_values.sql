@@ -1,3 +1,7 @@
+INSERT INTO authority(authority)
+VALUES ('USER'),
+       ('ADMIN');
+
 INSERT INTO url (url)
 VALUES ('https://google.com'),
        ('https://facebook.com'),

@@ -1,4 +1,4 @@
-package com.diachenko.checker;
+package com.diachenko.checker.integration;
 
 
 /*  health-checker

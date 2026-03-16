@@ -1,11 +1,14 @@
 spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   threads:
     virtual:
       enabled: true
   application:
     name: "health-checker"
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: validate
   flyway:
