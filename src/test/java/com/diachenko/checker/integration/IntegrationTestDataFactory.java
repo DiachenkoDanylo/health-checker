@@ -7,7 +7,6 @@ package com.diachenko.checker.integration;
 */
 
 import com.diachenko.checker.model.entity.AppUser;
-import com.diachenko.checker.model.entity.Authority;
 import com.diachenko.checker.model.payload.RegisterUserPayload;
 import com.diachenko.checker.repository.AuthorityRepository;
 import com.diachenko.checker.repository.UserRepository;
@@ -32,8 +31,8 @@ public class IntegrationTestDataFactory {
     private final AppUserService appUserService;
 
     public void createDefaultUser() {
-        authorityRepository.save(new Authority("USER"));
-        authorityRepository.save(new Authority("ADMIN"));
+//        authorityRepository.save(new Authority("USER"));
+//        authorityRepository.save(new Authority("ADMIN"));
 
         authenticationService.registerUser(
                 new RegisterUserPayload("johndoe", "pass1", Set.of("USER"))
