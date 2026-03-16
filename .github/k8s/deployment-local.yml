@@ -17,6 +17,9 @@ spec:
         - name: ecr-secret
       containers:
         - name: health-app
+          envFrom:
+            - secretRef:
+                name: db-secret
           image: 348263686377.dkr.ecr.us-east-1.amazonaws.com/health-app:latest
           ports:
             - containerPort: 8080
