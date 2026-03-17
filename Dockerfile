@@ -28,4 +28,4 @@ COPY --from=extracted /build/snapshot-dependencies/ ./
 COPY --from=extracted /build/application/ ./
 
 # run with docker and profiles
-ENTRYPOINT ["java", "-Dspring.profiles.active=prod,h2", "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "org.springframework.boot.loader.launch.JarLauncher"]
