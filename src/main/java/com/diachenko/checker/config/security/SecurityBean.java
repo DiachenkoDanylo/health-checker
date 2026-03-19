@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 @Component
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableRedisHttpSession
 public class SecurityBean {
 
     private final String[] WHITELIST = new String[]{"/health", "/h2-console/**", "/auth/**", "/access-denied", "/actuator/**"};
