@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -23,13 +24,13 @@ public class SecurityBean {
 
     private final String[] WHITELIST = new String[]{"/health", "/h2-console/**", "/auth/**", "/access-denied", "/actuator/**"};
     private final String[] ADMIN_URLs = new String[]{"/admin"};
-    private final String[] USER_URLs = new String[]{"/api/**"};
+    private final String[] USER_URLs = new String[]{"/api/**","/k8s/**"};
 
     private final UserDetailsServiceImpl userDetailsService;
 
     @Bean
     @Profile("standalone")
-    public SecurityFilterChain securityFilterChainStandalone(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChainStandalone(HttpSecurity http) {
         http
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(WHITELIST).permitAll()
@@ -59,7 +60,7 @@ public class SecurityBean {
 
     @Bean
     @Profile("prod")
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(WHITELIST).permitAll()

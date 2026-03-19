@@ -22,17 +22,7 @@ public class HttpService {
 
     private final HttpClient httpClientDefault;
     private final MonitoredUrlService monitoredUrlService;
-    //    private final ExecutorService monitoringExecutor;
     private final UrlCheckResultService urlCheckResultService;
-
-//    @Scheduled(fixedDelay = 60000)
-//    public void updateStatuses() {
-//        Set<MonitoredUrl> urls = monitoredUrlService.getAllUrls();
-//        urls.forEach(url ->
-//                monitoringExecutor.submit(() ->
-//                        checkUrl(url.getId(), url.getUrl()))
-//        );
-//    }
 
     public void checkUrl(Long id, String urlString) {
         boolean isUp = false;
@@ -51,15 +41,15 @@ public class HttpService {
 
             long end = System.nanoTime();
             responseTimeMs = (end - start) / 1_000_000;
+
             statusCode = response.statusCode();
 
             isUp = statusCode >= 200 &&
                     statusCode < 400;
 
-
         } catch (Exception e) {
-            e.printStackTrace();
             isUp = false;
+            statusCode = 418;
         } finally {
             urlCheckResultService.saveUrlCheckResult(id, isUp, statusCode, responseTimeMs);
             monitoredUrlService.updateStatus(id, isUp);

@@ -13,3 +13,13 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  session:
+    store-type: redis
+    redis:
+      namespace: health-checker:session  # prefix keys Redis
+      flush-mode: on-save                # save on changes
+    timeout: 30m                         # session lifetime
+    data:
+      redis:
+        host: ${REDIS_HOST}
+        port: 6379
