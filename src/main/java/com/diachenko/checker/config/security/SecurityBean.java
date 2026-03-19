@@ -25,7 +25,7 @@ public class SecurityBean {
 
     private final String[] WHITELIST = new String[]{"/health", "/h2-console/**", "/auth/**", "/access-denied", "/actuator/**"};
     private final String[] ADMIN_URLs = new String[]{"/admin"};
-    private final String[] USER_URLs = new String[]{"/api/**"};
+    private final String[] USER_URLs = new String[]{"/api/**","/k8s/**"};
 
     private final UserDetailsServiceImpl userDetailsService;
 
