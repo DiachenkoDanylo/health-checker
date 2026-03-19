@@ -29,21 +29,25 @@ public class AuthenticationService {
     private final AuthorityRepository authorityRepository;
 
     public AppUser registerUser(RegisterUserPayload payload) {
+        try {
+            userRepository.findByUsername(payload.getUsername())
+                    .ifPresent(user -> {
+                        throw new RuntimeException("USER DUPLICATE");
+                    });
 
-        userRepository.findByUsername(payload.getUsername())
-                .ifPresent(user -> {
-                    throw new RuntimeException("USER DUPLICATE");
-                });
+            Set<Authority> authorities = fetchAuthorities(payload.getAuthorities());
 
-        Set<Authority> authorities = fetchAuthorities(payload.getAuthorities());
+            AppUser appUser = AppUser.builder()
+                    .username(payload.getUsername())
+                    .password(passwordEncoder.encode(payload.getPassword()))
+                    .authorities(authorities)
+                    .build();
+            log.info("USER REGISTERED {}", appUser);
+            return userRepository.save(appUser);
+        } catch (RuntimeException e) {
+            return null;
+        }
 
-        AppUser appUser = AppUser.builder()
-                .username(payload.getUsername())
-                .password(passwordEncoder.encode(payload.getPassword()))
-                .authorities(authorities)
-                .build();
-        log.info("USER REGISTERED {}", appUser);
-        return userRepository.save(appUser);
     }
 
 
