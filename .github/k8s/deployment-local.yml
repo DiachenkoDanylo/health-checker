@@ -17,6 +17,9 @@ spec:
         - name: ecr-secret
       containers:
         - name: health-app
+          env:
+            - name: REDIS_HOST
+              value: "host.docker.internal"
           envFrom:
             - secretRef:
                 name: db-secret

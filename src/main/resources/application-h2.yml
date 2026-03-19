@@ -1,4 +1,6 @@
 spring:
+  session:
+    store-type: none
   jpa:
     show-sql: true
     properties:
